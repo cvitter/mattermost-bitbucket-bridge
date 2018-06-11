@@ -1,1 +1,2 @@
-# mattermost-bitbucket-bridge
+# Bitbucket Webhook bridge for Mattermost
+

@@ -1,0 +1,12 @@
+{
+	"application" : {
+		"host" : "",
+		"port" : 5006,
+		"debug" : False
+	},
+	"mattermost" : {
+		"server_url" : "",
+		"post_user_name" : "",
+		"post_user_icon" : ""
+	}
+}
