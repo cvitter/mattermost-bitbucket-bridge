@@ -101,8 +101,7 @@ def hooks(hook_path):
             
     
     return ""
-#     if response.status_code != 200:
-#         return "Error"
+
  
 if __name__ == '__main__':
    app.run(host = application_host, port = application_port, debug = application_debug)
