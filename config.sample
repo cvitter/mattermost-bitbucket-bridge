@@ -4,9 +4,17 @@
 		"port" : 5006,
 		"debug" : False
 	},
+	"colors" : {
+		"error" : "#ff0000",
+		"alert" : "#ffff00",
+		"success" : "#28c12b"
+	},
 	"mattermost" : {
 		"server_url" : "",
 		"post_user_name" : "",
 		"post_user_icon" : ""
+	},
+	"bitbucket" : {
+		"server_url" : ""
 	}
 }
