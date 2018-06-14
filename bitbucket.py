@@ -5,6 +5,9 @@ import requests
 import helpers
 
 def readConfig():
+    """
+    Reads config.json to get configuration settings
+    """
     d = json.load( open('config.json') )
     
     global application_host, application_port, application_debug
@@ -27,19 +30,27 @@ def readConfig():
     
 
 def get_event_type( event_key ):
+    """
+    Converts event to friendly output
+    TODO: Need to add error handler for unsupported events
+    """
     event_out = helpers.bitbucket_events.get( event_key )
     return event_out
 
 
 def process_payload( hook_path, request_id, data ):
-    text_out = "" #"Bitbucket Request ID: " + request_id
+    """
+    Reads Bitbucket JSON payload and converts it into Mattermost friendly
+    message attachement format
+    TODO: Add option to return message as text only format
+    """
+    text_out = ""
     attachment_text = ""
     
     event = get_event_type( data["eventKey"] )
     actor = "[" + data["actor"]["name"] + " (" + data["actor"]["emailAddress"] + ")](" + bitbucket_url + "users/" + data["actor"]["name"] + ")"
 
     attach_extra = ""
-    
     # Pull Requests and Pull Request Comments
     if data["eventKey"].startswith( 'pr:' ):
         pr_id = str( data["pullRequest"]["id"] )
@@ -53,13 +64,13 @@ def process_payload( hook_path, request_id, data ):
         else: 
             attach_extra = "[" + pr_id + " : " + pr_title + "](" + url + ")"
             
-    # Commits - Push (Add, Update), Comment
+    # Commits - Push (Add, Update), Comment, etc.
     if data["eventKey"].startswith( 'repo:' ):
         repo_name = data["repository"]["name"]
         proj_key = data["repository"]["project"]["key"]
         url = bitbucket_url + "projects/" + proj_key + "/repos/" + repo_name
         
-        # Comment added
+        # Comment added, updated, deleted
         if  data["eventKey"].startswith( "repo:comment:" ):
             url += "/commits/" +  data["commit"]
             attach_extra = "**Comment**: [" + data["comment"]["text"] + "](" + url + ")"
@@ -81,6 +92,10 @@ def process_payload( hook_path, request_id, data ):
 
 
 def send_webhook( hook_path, text_out, attachment_text, attachment_color ):
+    """
+    Assembles incoming text, creates JSON object for the response, and
+    sends if on to the Mattermost server and hook configured
+    """
     if len(attachment_text) > 0:
         attach_dict = { 
             "color": attachment_color, 
