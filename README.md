@@ -13,6 +13,7 @@ Information on setting up for the different usage scenarios can be found below.
  
  **Import Notes**:
  * This application has only been tested with Bitbucket Server 5.10.1. 
+ * This application was written extremely quickly and could use additional work in the form of refactoring, the addition of error handling, and testing (including on different versions of Bitbucket). Please feel free to jump in and help with pull requests, issues, etc.
  * This application is an example of how to bridge Bitbucket webhooks to Mattermost and is not 
  meant to be used in a production environment.
  
