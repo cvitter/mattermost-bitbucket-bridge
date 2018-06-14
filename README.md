@@ -1,4 +1,4 @@
-# Bitbucket Webhook Bridge (BWB) for Mattermost
+# Bitbucket Webhook Bridge for Mattermost
 
 This repository is contains a Python Flask application that accepts webhooks from [Bitbucket
 Server](https://www.atlassian.com/software/bitbucket/server) and forwards them to the specified
