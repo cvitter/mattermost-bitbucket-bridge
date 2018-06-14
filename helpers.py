@@ -1,3 +1,6 @@
+"""
+Dictionary of supported Bitbucket events and output friendly format
+"""
 bitbucket_events = {
     "pr:comment:added" : "Pull Request: Comment Added",
     "pr:comment:deleted" : "Pull Request: Comment Deleted",
