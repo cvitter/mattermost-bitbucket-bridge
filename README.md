@@ -1,8 +1,15 @@
-# Bitbucket Webhook bridge for Mattermost
+# Bitbucket Webhook Bridge (BWB) for Mattermost
 
 This repository is contains a Python Flask application that accepts webhooks from [Bitbucket
 Server](https://www.atlassian.com/software/bitbucket/server) and forwards them to the specified
-channel in a [Mattermost](https://mattermost.com) server.
+channel in a [Mattermost](https://mattermost.com) server via an incoming webhook. The bridge application
+supports a number of usage scenarios including:
+
+* One Bitbucket repository to one Mattermost incoming webhook (one to one);
+* Many Bitbucket repositories to many Mattermost incoming webhooks (many to many) and;
+* Many Bitbucket repositories to one Mattermost incoming webhook (many to one).
+
+Information on setting up for the different usage scenarios can be found below.
  
  **Import Notes**:
  * This application has only been tested with Bitbucket Server 5.10.1. 
@@ -43,6 +50,12 @@ The following steps
 ```
 sudo python bitbucket.py >> bitbucket.log 2>&1 &
 ```
+
+# Configure Mattermost
+
+
+
+# Configure Bitbucket
 
 
 
