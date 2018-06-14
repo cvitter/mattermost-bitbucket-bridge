@@ -27,6 +27,23 @@ channel in a [Mattermost](https://mattermost.com) server.
 * Repository forked
 * Repository refs updated
 
+## Setup the Flask Application
+
+The following steps
+
+1. Log into the machine that will host the Python Flask application;
+2. Clone this repository to your machine: `git clone https://github.com/cvitter/mattermost-bitbucket-bridge.git`;
+3. Make a copy of `config.sample`: `cp config.sample config.json`
+4. Edit `config.json` to update the following fields as needed:
+   * Application host address and port (generally debug should be left set to `false`;
+   * Mattermost server_url and the user name or icon to override the webhook with if desired;
+   * And the base url of your Bitbucket server.
+5. Run the Flask application - there are a number of ways to run the application but I use the following command that runs the application headlessly and captures output into a log file for troubleshooting:
+
+```
+sudo python bitbucket.py >> bitbucket.log 2>&1 &
+```
+
 
 
 # Make this Project Better (Questions, Feedback, Pull Requests Etc.)
