@@ -70,13 +70,20 @@ http://flask-application-url:port/hooks/[hookcode]
 Then select the `Repository` and `Pull request` events you want to be notified about and click on `Create` to create the webhook.
 
 # Docker Installation
-  - clone the repo
-  - create and setup `config.json`
-  - build the docker image
-    - ```docker build -t DOCKER_IMAGE_NAME .```
-    - ```docker pull DOCKER_IMAGE_NAME```
-    - ```docker run -d -p 5006:5006 DOCKER_IMAGE_NAME```
 
+To use the docker based installation created by [ronhks](https://github.com/ronhks):
+
+1. Log into the machine that will host the Python Flask application;
+2. Clone this repository to your machine: `git clone https://github.com/cvitter/mattermost-bitbucket-bridge.git`;
+3. Make a copy of `config.sample`: `cp config.sample config.json`
+4. Edit `config.json` to update the following fields as needed:
+   * Application host address and port (generally debug should be left set to `false`;
+   * Mattermost server_url and the user name or icon to override the webhook with if desired;
+   * And the base url of your Bitbucket server.
+5. Build the docker image (replace `DOCKER_IMAGE_NAME` with your name of choice): 
+  - `docker build -t DOCKER_IMAGE_NAME .`
+  - `docker pull DOCKER_IMAGE_NAME`
+6. And run the docker image: `docker run -d -p 5006:5006 DOCKER_IMAGE_NAME`
 
 # Make this Project Better (Questions, Feedback, Pull Requests Etc.)
 
