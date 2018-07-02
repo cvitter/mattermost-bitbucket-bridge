@@ -105,7 +105,7 @@ def process_payload(hook_path, request_id, data):
 def send_webhook(hook_path, text_out, attachment_text, attachment_color):
     """
     Assembles incoming text, creates JSON object for the response, and
-    sends if on to the Mattermost server and hook configured
+    sends it on to the Mattermost server and hook configured
     """
     if len(attachment_text) > 0:
         attach_dict = {
