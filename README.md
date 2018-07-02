@@ -69,12 +69,13 @@ http://flask-application-url:port/hooks/[hookcode]
 
 Then select the `Repository` and `Pull request` events you want to be notified about and click on `Create` to create the webhook.
 
-#Docker Installation
+# Docker Installation
   - clone the repo
   - create and setup `config.json`
   - build the docker image
-    - ```docker build -t cvitter-mattermost-bitbucket-bridge .```
-    - ```docker run cvitter-mattermost-bitbucket-bridge```
+    - ```docker build -t DOCKER_IMAGE_NAME .```
+    - ```docker pull DOCKER_IMAGE_NAME```
+    - ```docker run -d -p 5006:5006 DOCKER_IMAGE_NAME```
 
 
 # Make this Project Better (Questions, Feedback, Pull Requests Etc.)
