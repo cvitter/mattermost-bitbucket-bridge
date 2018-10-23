@@ -12,7 +12,7 @@ supports a number of usage scenarios including:
 Information on setting up for the different usage scenarios can be found below.
  
  **Import Notes**:
- * This application has only been tested with Bitbucket Server 5.10.1. 
+ * This application has been tested with Bitbucket Server 5.10.1 and BitBucket Cloud
  * This application was written extremely quickly and could use additional work in the form of refactoring, the addition of error handling, and testing (including on different versions of Bitbucket). Please feel free to jump in and help with pull requests, issues, etc.
  * This application is an example of how to bridge Bitbucket webhooks to Mattermost and is not 
  meant to be used in a production environment.
@@ -45,7 +45,7 @@ The following steps
 4. Edit `config.json` to update the following fields as needed:
    * Application host address and port (generally debug should be left set to `false`;
    * Mattermost server_url and the user name or icon to override the webhook with if desired;
-   * And the base url of your Bitbucket server.
+   * And the base url of your Bitbucket server. (*Leave empty to use BitBucket Cloud*)
 5. Run the Flask application - there are a number of ways to run the application but I use the following command that runs the application headlessly and captures output into a log file for troubleshooting:
 
 ```

@@ -36,10 +36,11 @@ def get_event_type(event_key):
     TODO: Need to add error handler for unsupported events
     """
     event_out = helpers.bitbucket_events.get(event_key)
+    if event_out is None:
+        raise KeyError('Unsupported event type!')
     return event_out
 
-
-def process_payload(hook_path, request_id, data):
+def process_payload_server(hook_path, request_id, data):
     """
     Reads Bitbucket JSON payload and converts it into Mattermost friendly
     message attachement format
@@ -101,6 +102,53 @@ def process_payload(hook_path, request_id, data):
 
     return send_webhook(hook_path, text_out, attachment_text, success_color)
 
+def process_payload_cloud(hook_path, request_id, data, event_key):
+    """
+    Reads Bitbucket Cloud JSON payload and converts it into Mattermost friendly
+    message attachement format
+    TODO: Add option to return message as text only format
+    """
+    text_out = ""
+    attachment_text = ""
+
+    event = get_event_type(event_key)
+    actor = "[" + data["actor"]["display_name"] + "](" + "https://bitbucket.org/" + data["actor"]["username"] + ")"
+
+    attach_extra = ""
+    # Pull Requests and Pull Request Comments
+    if event_key.startswith('pr:'):
+        pr_id = str(data["pullrequest"]["id"])
+        pr_title = data["pullrequest"]["title"]
+        repo_name = data["pullrequest"]["destination"]["repository"]["name"]
+        proj_key = data["pullrequest"]["destination"]["repository"]["project"]["key"]
+        url = "https://bitbucket.org/" + proj_key + "/" + repo_name + "/pull-requests/" + pr_id
+
+        if event_key.startswith("pr:comment:"):
+            attach_extra = "**Comment**: [" + data["comment"]["content"]["markdown"] + "](" + url + ")"
+        else:
+            attach_extra = "[" + pr_id + " : " + pr_title + "](" + url + ")"
+
+    # Commits - Push (Add, Update), Comment, etc.
+    if event_key.startswith('repo:'):
+        repo_name = data["repository"]["name"]
+        proj_key = data["repository"]["project"]["key"]
+        url = "https://bitbucket.org/" + proj_key + "/" + repo_name
+
+        # Comment added, updated, deleted
+        if event_key == "repo:commit_comment_created":
+            url += "/commits/" +  data["commit"]["hash"]
+            attach_extra = "**Comment**: [" + data["comment"]["content"]["markdown"] + "](" + url + ")"
+
+    # Assemble the final attachment text to return and pass
+    # to the send_webhook function
+    attachment_text = "**" + event + "**\n**Author**: " + actor
+    if len(repo_name) > 1:
+        attachment_text = "**Repository**: " + repo_name + "\n" + attachment_text
+    if len(attach_extra) > 0:
+        attachment_text += "\n" + attach_extra
+
+    return send_webhook(hook_path, text_out, attachment_text, success_color)
+
 
 def send_webhook(hook_path, text_out, attachment_text, attachment_color):
     """
@@ -156,7 +204,10 @@ def hooks(hook_path):
     else:
         if len(request.get_json()) > 0:
             data = request.get_json()
-            response = process_payload(hook_path, request_id, data)
+            if len(bitbucket_url) > 0:
+                response = process_payload_server(hook_path, request_id, data)
+            else
+                response = process_payload_cloud(hook_path, request_id, data, event)
     return ""
 
 if __name__ == '__main__':
