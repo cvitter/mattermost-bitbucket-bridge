@@ -189,7 +189,6 @@ readConfig()
 
 app = Flask(__name__)
 
-
 @app.route( '/hooks/<hook_path>', methods = [ 'POST' ] )
 def hooks(hook_path):
 
@@ -206,7 +205,7 @@ def hooks(hook_path):
             data = request.get_json()
             if len(bitbucket_url) > 0:
                 response = process_payload_server(hook_path, request_id, data)
-            else
+            else:
                 response = process_payload_cloud(hook_path, request_id, data, event)
     return ""
 
