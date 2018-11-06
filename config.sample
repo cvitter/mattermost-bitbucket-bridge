@@ -10,8 +10,8 @@
 		"success" : "#28c12b"
 	},
 	"mattermost" : {
-		"server_url" : "",
-		"post_user_name" : "",
+		"server_url" : "https://your_MM_.fqdn.com/",
+		"post_user_name" : "Your_MM_Username",
 		"post_user_icon" : ""
 	},
 	"bitbucket" : {
