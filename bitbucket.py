@@ -26,8 +26,9 @@ def readConfig():
     mattermost_user = d["mattermost"]["post_user_name"]
     mattermost_icon = d["mattermost"]["post_user_icon"]
 
-    global bitbucket_url
+    global bitbucket_url, bitbucket_ignore_comments
     bitbucket_url = d["bitbucket"]["server_url"]
+    bitbucket_ignore_comments = d["bitbucket"]["ignore_comments"]
 
 
 def get_event_name(event_key):
@@ -126,6 +127,11 @@ def process_payload_cloud(hook_path, data, event_key):
 
     # Pull Requests and Pull Request Comments
     if event_key.startswith('pullrequest:'):
+        if event_key.startswith('pullrequest:comment_'):
+            comment_text = data["comment"]["content"]["raw"]
+            if any(ext in comment_text for ext in bitbucket_ignore_comments):
+                raise StandardError('Ignoring comment!')
+
         pr_id = str(data["pullrequest"]["id"])
         pr_title = data["pullrequest"]["title"]
         pr_description = data["pullrequest"]["description"]
@@ -148,7 +154,7 @@ def process_payload_cloud(hook_path, data, event_key):
                 "author_link": pr_author_url,
                 "title": pr_title,
                 "color": color,
-                "title_link": "http://docs.mattermost.com/developer/message-attachments.html",
+                "title_link": pr_url,
                 "fields": [
                     {
                         "short": False,
@@ -171,14 +177,23 @@ def process_payload_cloud(hook_path, data, event_key):
                         "value": ", ".join(reviewers)
                     })
 
-        if event_key == 'pullrequest:comment_created':
-            attachment["fields"].append({
-                        "short": False,
-                        "title": "Comment",
-                        "value": data["comment"]["content"]["raw"]
-                    })
+        if event_key.startswith('pullrequest:comment_'):
+            if event_key == 'pullrequest:comment_deleted':
+                attachment["fields"] = {}
+            else:
+                attachment["fields"] = [{
+                            "short": False,
+                            "title": "Comment",
+                            "value": comment_text
+                        }]                
 
-    elif event_key.startswith('repo:commit_status_'):
+    elif event_key.startswith('repo:commit_status_'):        
+        commit_author_name = data["commit_status"]["commit"]["author"]["user"]["display_name"]
+        commit_author_url = data["commit_status"]["commit"]["author"]["user"]["links"]["html"]["href"]
+        commit_author_icon_url = data["commit_status"]["commit"]["author"]["user"]["links"]["avatar"]["href"]
+        commit_title = data["commit_status"]["commit"]["message"]
+        commit_url = data["commit_status"]["commit"]["links"]["html"]["href"]
+
         state = data["commit_status"]["state"]
         color = ''
         state_icon = ''
@@ -191,16 +206,19 @@ def process_payload_cloud(hook_path, data, event_key):
             state_icon = ':no_entry: '
             state_action = 'failed'
         else:
-            raise KeyError('Unsupported event status!')
+            raise KeyError('Unsupported event state!')
 
         text = "{}[{}]({}) {}".format(state_icon, data["commit_status"]["name"], data["commit_status"]["url"], state_action)
         if len(data["commit_status"]["description"]):
             text += "\n{}".format(data["commit_status"]["description"])
+
+
         attachment = {
-                "author_name": pr_author_name,
-                "author_icon": pr_author_icon_url,
-                "author_link": pr_author_url,
-                "title": '', # commit title?
+                "author_name": commit_author_name,
+                "author_icon": commit_author_icon_url,
+                "author_link": commit_author_url,
+                "title": commit_title,
+                "title_link": commit_url,
                 "color": color
             }
 

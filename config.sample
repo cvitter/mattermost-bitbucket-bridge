@@ -15,6 +15,7 @@
 		"post_user_icon" : ""
 	},
 	"bitbucket" : {
-		"server_url" : ""
+		"server_url" : "",
+		"ignore_comments" : []
 	}
 }
