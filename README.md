@@ -105,6 +105,7 @@ The code in this repository is not sponsored or supported by Mattermost, Inc.
 * Author: [Craig Vitter](https://github.com/cvitter)
 
 # Contributors 
+* [Fabian Jäger](https://github.com/fjaeger)
 * [Zsolt Dénes](https://github.com/ronhks)
 
 Please submit Issues and/or Pull Requests.
