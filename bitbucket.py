@@ -26,20 +26,32 @@ def readConfig():
     mattermost_user = d["mattermost"]["post_user_name"]
     mattermost_icon = d["mattermost"]["post_user_icon"]
 
-    global bitbucket_url
+    global bitbucket_url, bitbucket_ignore_comments
     bitbucket_url = d["bitbucket"]["server_url"]
+    bitbucket_ignore_comments = d["bitbucket"]["ignore_comments"]
 
 
-def get_event_type(event_key):
+def get_event_name(event_key):
     """
     Converts event to friendly output
     TODO: Need to add error handler for unsupported events
     """
-    event_out = helpers.bitbucket_events.get(event_key)
+    event_out = helpers.bitbucket_server_event_names.get(event_key)
+    if event_out is None:
+        raise KeyError('Unsupported event type!')
     return event_out
 
+def get_event_action_text(event_key):
+    """
+    Converts event to friendly output
+    TODO: Need to add error handler for unsupported events
+    """
+    event_out = helpers.bitbucket_cloud_event_actions.get(event_key)
+    if event_out is None:
+        raise KeyError('Unsupported event type!')
+    return event_out
 
-def process_payload(hook_path, request_id, data):
+def process_payload_server(hook_path, data):
     """
     Reads Bitbucket JSON payload and converts it into Mattermost friendly
     message attachement format
@@ -48,7 +60,7 @@ def process_payload(hook_path, request_id, data):
     text_out = ""
     attachment_text = ""
 
-    event = get_event_type(data["eventKey"])
+    event_name = get_event_name(data["eventKey"])
     actor = "[" + data["actor"]["name"] + \
             " (" + data["actor"]["emailAddress"] + ")](" + bitbucket_url + \
             "users/" + data["actor"]["name"] + ")"
@@ -92,17 +104,145 @@ def process_payload(hook_path, request_id, data):
 
     # Assemble the final attachment text to return and pass
     # to the send_webhook function
-    attachment_text = "**" + event + "**\n**Author**: " + actor
+    attachment_text = "**" + event_name + "**\n**Author**: " + actor
     if len(repo_name) > 1:
         attachment_text = "**Repository**: " + repo_name + "\n" + \
                            attachment_text
     if len(attach_extra) > 0:
         attachment_text += "\n" + attach_extra
 
-    return send_webhook(hook_path, text_out, attachment_text, success_color)
+    return send_simple_webhook(hook_path, text_out, attachment_text, success_color)
+
+def process_payload_cloud(hook_path, data, event_key):
+    """
+    Reads Bitbucket Cloud JSON payload and converts it into Mattermost friendly
+    message attachement format
+    TODO: Add option to return message as text only format
+    """
+    text = ""
+    attachment = {}
+    
+    actor_name = data["actor"]["display_name"]
+    actor_url = data["actor"]["links"]["html"]["href"]
+
+    # Pull Requests and Pull Request Comments
+    if event_key.startswith('pullrequest:'):
+        if event_key.startswith('pullrequest:comment_'):
+            comment_text = data["comment"]["content"]["raw"]
+            if any(ext in comment_text for ext in bitbucket_ignore_comments):
+                raise StandardError('Ignoring comment!')
+
+        pr_id = str(data["pullrequest"]["id"])
+        pr_title = data["pullrequest"]["title"]
+        pr_description = data["pullrequest"]["description"]
+        pr_author_name = data["pullrequest"]["author"]["display_name"]
+        pr_author_url = data["pullrequest"]["author"]["links"]["html"]["href"]
+        pr_author_icon_url = data["pullrequest"]["author"]["links"]["avatar"]["href"]
+        pr_url = data["pullrequest"]["links"]["html"]["href"]
+
+        text = get_event_action_text(event_key).format("[" + actor_name + "](" + actor_url + ")", "[#" + pr_id + "](" + pr_url + ")")
+        
+        color = ''
+        if event_key == 'pullrequest:approved' or event_key == 'pullrequest:merged':
+            color = 'good'
+        elif event_key == 'pullrequest:unapproved' or event_key == 'pullrequest:declined' or event_key == 'pullrequest:deleted':
+            color = 'danger'
+
+        attachment = {
+                "author_name": pr_author_name,
+                "author_icon": pr_author_icon_url,
+                "author_link": pr_author_url,
+                "title": pr_title,
+                "color": color,
+                "title_link": pr_url,
+                "fields": [
+                    {
+                        "short": False,
+                        "title": "Description",
+                        "value": pr_description
+                    }
+                ]
+            }
+
+        reviewers = []
+        for participant in data["pullrequest"]["participants"]:
+            if participant["role"] != 'REVIEWER':
+                continue
+            approved_icon = ':white_check_mark: ' if participant['approved'] else ''
+            reviewers.append("{}[{}]({})".format(approved_icon, participant["user"]["display_name"], participant["user"]["links"]["html"]["href"]))
+        if len(reviewers) > 0:
+            attachment["fields"].append({
+                        "short": False,
+                        "title": "Reviewers",
+                        "value": ", ".join(reviewers)
+                    })
+
+        if event_key.startswith('pullrequest:comment_'):
+            if event_key == 'pullrequest:comment_deleted':
+                attachment["fields"] = {}
+            else:
+                attachment["fields"] = [{
+                            "short": False,
+                            "title": "Comment",
+                            "value": comment_text
+                        }]                
+
+    elif event_key.startswith('repo:commit_status_'):        
+        commit_author_name = data["commit_status"]["commit"]["author"]["user"]["display_name"]
+        commit_author_url = data["commit_status"]["commit"]["author"]["user"]["links"]["html"]["href"]
+        commit_author_icon_url = data["commit_status"]["commit"]["author"]["user"]["links"]["avatar"]["href"]
+        commit_title = data["commit_status"]["commit"]["message"]
+        commit_url = data["commit_status"]["commit"]["links"]["html"]["href"]
+
+        state = data["commit_status"]["state"]
+        color = ''
+        state_icon = ''
+        state_action = 'passed'
+        if state == 'SUCCESSFUL':
+            color = 'good'
+            state_icon = ':white_check_mark: '
+        elif state == 'FAILED':
+            color = 'danger'
+            state_icon = ':no_entry: '
+            state_action = 'failed'
+        else:
+            raise KeyError('Unsupported event state!')
+
+        text = "{}[{}]({}) {}".format(state_icon, data["commit_status"]["name"], data["commit_status"]["url"], state_action)
+        if len(data["commit_status"]["description"]):
+            text += "\n{}".format(data["commit_status"]["description"])
 
 
-def send_webhook(hook_path, text_out, attachment_text, attachment_color):
+        attachment = {
+                "author_name": commit_author_name,
+                "author_icon": commit_author_icon_url,
+                "author_link": commit_author_url,
+                "title": commit_title,
+                "title_link": commit_url,
+                "color": color
+            }
+
+    # Assemble message data
+    data = {
+            'text': text,
+            'username': mattermost_user,
+            'icon_url': mattermost_icon,
+            "attachments": [attachment]
+        }
+    return send_webhook_data(hook_path, data)
+
+def send_webhook_data(hook_path, data):
+    """
+    Sends message data to the Mattermost server and hook configured
+    """
+    response = requests.post(
+        mattermost_url + "hooks/" + hook_path,
+        data = json.dumps(data),
+        headers = {'Content-Type': 'application/json'}
+    )
+    return response
+
+def send_simple_webhook(hook_path, text_out, attachment_text, attachment_color):
     """
     Assembles incoming text, creates JSON object for the response, and
     sends it on to the Mattermost server and hook configured
@@ -125,12 +265,7 @@ def send_webhook(hook_path, text_out, attachment_text, attachment_color):
             'icon_url': mattermost_icon,
         }
 
-    response = requests.post(
-        mattermost_url + "hooks/" + hook_path,
-        data = json.dumps(data),
-        headers = {'Content-Type': 'application/json'}
-    )
-    return response
+    return send_webhook_data(hook_path, data)
 
 
 """
@@ -141,22 +276,21 @@ readConfig()
 
 app = Flask(__name__)
 
-
 @app.route( '/hooks/<hook_path>', methods = [ 'POST' ] )
 def hooks(hook_path):
 
-    request_id = request.headers.get('X-Request-Id')
     event = request.headers.get('X-Event-Key')
 
     if event == "diagnostics:ping":
-        response = send_webhook(hook_path, "diagnostics:ping", 
-                                "Bitbucket is testing the connection " + \
-                                "to Mattermost: " + request_id, 
-                                alert_color)
+        request_id = request.headers.get('X-Request-Id')
+        response = send_simple_webhook(hook_path, "diagnostics:ping", "Bitbucket is testing the connection to Mattermost: " + request_id, alert_color)
     else:
         if len(request.get_json()) > 0:
             data = request.get_json()
-            response = process_payload(hook_path, request_id, data)
+            if len(bitbucket_url) > 0:
+                response = process_payload_server(hook_path, data)
+            else:
+                response = process_payload_cloud(hook_path, data, event)
     return ""
 
 if __name__ == '__main__':
