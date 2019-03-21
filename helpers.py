@@ -30,5 +30,6 @@ bitbucket_cloud_event_actions = {
     "pullrequest:deleted": "{} deleted pull request {}",
     "pullrequest:comment_created": "{} added a comment to pull request {}",
     "pullrequest:comment_updated": "{} updated a comment to pull request {}",
-    "pullrequest:comment_deleted": "{} deleted a comment to pull request {}"
+    "pullrequest:comment_deleted": "{} deleted a comment to pull request {}",
+    "repo:push": "{} Repository: Code changes pushed by: {}"
 }
