@@ -107,5 +107,7 @@ The code in this repository is not sponsored or supported by Mattermost, Inc.
 # Contributors 
 * [Fabian Jäger](https://github.com/fjaeger)
 * [Zsolt Dénes](https://github.com/ronhks)
+* [Nisarg Desai](https://github.com/Nisarg10)
+* [Mike Ehun](https://github.com/mikeehun)
 
 Please submit Issues and/or Pull Requests.
