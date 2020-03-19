@@ -35,7 +35,6 @@ def readConfig():
 def get_event_name(event_key):
     """
     Converts event to friendly output
-    TODO: Need to add error handler for unsupported events
     """
     event_out = helpers.bitbucket_server_event_names.get(event_key)
     if event_out is None:
@@ -45,7 +44,6 @@ def get_event_name(event_key):
 def get_event_action_text(event_key):
     """
     Converts event to friendly output
-    TODO: Need to add error handler for unsupported events
     """
     event_out = helpers.bitbucket_cloud_event_actions.get(event_key)
     if event_out is None:
