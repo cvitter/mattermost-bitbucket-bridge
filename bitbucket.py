@@ -234,6 +234,9 @@ def process_payload_cloud(hook_path, data, event_key):
 
         text = event_name.format("[" + push_commit_repository + "](" + push_commit_repository_url + ")","[" + actor_name + "](" + actor_url + ")")
 
+        if data["push"]["changes"][0]["forced"]:
+            text = text.replace("pushed", "**force pushed**")
+
         text += "\n"
         for commit in data["push"]["changes"][0]["commits"]:
             message = commit["message"].split('\n', 1)[0]
