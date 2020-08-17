@@ -223,41 +223,33 @@ def process_payload_cloud(hook_path, data, event_key):
             }
 
     elif event_key.startswith('repo:push'):
-        push_author_icon_url = data["actor"]["links"]["avatar"]["href"]
-        push_commit_message = data["push"]["changes"][0]["new"]["target"]["message"]
-        push_commit_message_url = data["push"]["changes"][0]["new"]["target"]["links"]["html"]["href"]
-        push_commit_branch_name = data["push"]["changes"][0]["new"]["name"]
         push_commit_date = data["push"]["changes"][0]["new"]["target"]["date"]
         push_commit_repository = data["repository"]["name"]
         push_commit_repository_url = data["repository"]["links"]["html"]["href"]
-        
+
         # Following code strip the last +HH:MM(timezone offset) of date string and then convert
         # it to datetime object in pyhton.
         date_sub_string_index = push_commit_date.find('+')
         push_commit_date = push_commit_date[:date_sub_string_index]
-        push_commit_date_obj = datetime.datetime.strptime(push_commit_date, '%Y-%m-%dT%H:%M:%S')
-        
+
         text = event_name.format("[" + push_commit_repository + "](" + push_commit_repository_url + ")","[" + actor_name + "](" + actor_url + ")")
-        
-        attachment = {
-                "author_name": actor_name,
-                "author_icon": push_author_icon_url,
-                "author_link": actor_url,
-                "title": push_commit_message,
-                "title_link": push_commit_message_url,
-                 "fields": [
-                    {
-                      "short":True,
-                      "title":"Branch",
-                      "value":push_commit_branch_name 
-                    },
-                    {
-                      "short":True,
-                      "title":"Date",
-                      "value":push_commit_date_obj.strftime('%d %B,%Y') + ' ' + push_commit_date_obj.strftime('%H:%M') + ' UTC'
-                    }
-                     ]
-            }
+
+        if data["push"]["changes"][0]["forced"]:
+            text = text.replace("pushed", "**force pushed**")
+
+        text += "\n"
+        for commit in data["push"]["changes"][0]["commits"]:
+            message = commit["message"].split('\n', 1)[0]
+            author = commit["author"]["raw"].split('<', 1)[0].strip()
+            link = "[" + commit["hash"] + "](" + commit["links"]["html"]["href"] + ")"
+            text += "- " + message + " (" + link + " by " + author + ")\n"
+
+        if data["push"]["changes"][0]["truncated"]:
+            text += "- ...and more (truncated)\n"
+
+        text += "\n"
+
+        attachment = None
 
     # Assemble message data
     data = {
