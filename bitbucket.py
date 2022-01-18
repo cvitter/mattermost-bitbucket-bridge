@@ -322,6 +322,10 @@ def hooks(hook_path):
                 response = process_payload_cloud(hook_path, data, event)
     return ""
 
+@app.route('/healthcheck')
+def health():
+    return 'OK'
+
 if __name__ == '__main__':
    app.run(host = application_host, port = application_port, 
            debug = application_debug)
